@@ -1,0 +1,571 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quotation</title>
+    <style>
+      :root {
+        --accent: #f6c343;
+        --ink: #0b1220;
+        --muted: #5b6475;
+        --line: rgba(15, 23, 42, 0.10);
+        --paper: #ffffff;
+        --soft: #f3f4f6;
+        --soft2: #eef1f5;
+        --black: #111827;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        color: var(--ink);
+        background: var(--paper);
+      }
+      .page {
+        width: 210mm;
+        min-height: 297mm;
+        padding: 0;
+        margin: 0 auto;
+        position: relative;
+        overflow: hidden;
+      }
+      /* Header like the reference (black strip + big accent circle). */
+      .header {
+        position: relative;
+        height: 66mm;
+      }
+      .header .strip {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 26mm;
+        background: var(--black);
+      }
+      .header .stripInner {
+        position: relative;
+        height: 26mm;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10mm 14mm 6mm;
+      }
+      .logoBlock {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        color: #fff;
+      }
+      .mark {
+        width: 12mm;
+        height: 12mm;
+        border-radius: 4mm;
+        background: rgba(255,255,255,0.10);
+        border: 1px solid rgba(255,255,255,0.18);
+        position: relative;
+        overflow: hidden;
+      }
+      .mark:before {
+        content: "";
+        position: absolute;
+        inset: -30% -30% -30% -30%;
+        background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), transparent 60%);
+        transform: rotate(20deg);
+      }
+      .logoText .name {
+        font-weight: 900;
+        letter-spacing: 0.3px;
+        font-size: 14px;
+        line-height: 1.1;
+      }
+      .logoText .tag {
+        margin-top: 1mm;
+        font-size: 9px;
+        letter-spacing: 0.9px;
+        text-transform: uppercase;
+        opacity: 0.78;
+      }
+
+      .circle {
+        position: absolute;
+        right: -18mm;
+        top: -16mm;
+        width: 78mm;
+        height: 78mm;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+      .circleInner {
+        position: absolute;
+        right: 18mm;
+        top: 16mm;
+        width: 60mm;
+        text-align: left;
+      }
+      .docTitle {
+        font-size: 28px;
+        font-weight: 1000;
+        letter-spacing: 2px;
+        color: #111827;
+      }
+      .metaGrid {
+        margin-top: 6mm;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 2mm 8mm;
+        font-size: 10px;
+        color: rgba(17,24,39,0.85);
+        font-weight: 700;
+      }
+      .metaGrid .k { opacity: 0.85; }
+      .metaGrid .v { text-align: right; font-weight: 900; }
+
+      .billRow {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 26mm;
+        height: 40mm;
+        background: var(--soft);
+        border-bottom: 1px solid var(--line);
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 8mm;
+        padding: 10mm 14mm;
+      }
+      .billTo .label {
+        font-size: 10px;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 900;
+      }
+      .billTo .name {
+        margin-top: 3mm;
+        font-size: 14px;
+        font-weight: 900;
+      }
+      .billTo .addr {
+        margin-top: 2mm;
+        font-size: 10px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+      .brandMeta {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 1.5mm;
+        color: var(--muted);
+        font-size: 10px;
+        text-align: right;
+      }
+      .brandMeta strong { color: var(--ink); }
+
+      .content {
+        padding: 10mm 14mm 10mm;
+      }
+      .table-wrap {
+        margin-top: 6mm;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+      }
+      thead th {
+        text-align: left;
+        font-size: 10px;
+        letter-spacing: 0.7px;
+        text-transform: uppercase;
+        color: rgba(17,24,39,0.70);
+        background: #fff;
+        padding: 10px 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      tbody td {
+        padding: 10px 8px;
+        vertical-align: top;
+        border-bottom: 1px solid var(--line);
+      }
+      tbody tr:last-child td { border-bottom: 0; }
+      .c-sno { width: 10mm; }
+      .c-room { width: 24mm; }
+      .c-dims { width: 40mm; color: var(--muted); }
+      .c-qty { width: 14mm; text-align: right; }
+      .c-area { width: 18mm; text-align: right; }
+      .c-rate { width: 20mm; text-align: right; }
+      .c-amt { width: 28mm; text-align: right; font-weight: 800; }
+      .item-title { font-weight: 700; }
+      ul.notes {
+        margin: 6px 0 0;
+        padding-left: 14px;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+      /* Bottom like reference: left accent circle with payment/terms, right totals + sign */
+      .bottom {
+        margin-top: 10mm;
+        display: grid;
+        grid-template-columns: 1.2fr 0.9fr;
+        gap: 10mm;
+        align-items: end;
+        position: relative;
+        min-height: 55mm;
+      }
+      .bottom .bubble {
+        position: absolute;
+        left: -18mm;
+        bottom: -26mm;
+        width: 78mm;
+        height: 78mm;
+        border-radius: 999px;
+        background: var(--accent);
+        z-index: 0;
+      }
+      .bottomLeft {
+        position: relative;
+        z-index: 1;
+        padding: 10mm 0 0;
+      }
+      .thanks {
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 6mm;
+      }
+      .blockTitle {
+        font-size: 11px;
+        font-weight: 1000;
+        letter-spacing: 0.9px;
+        text-transform: uppercase;
+        color: #111827;
+      }
+      .mini {
+        margin-top: 2mm;
+        font-size: 10px;
+        color: rgba(17,24,39,0.82);
+        line-height: 1.45;
+        max-width: 85mm;
+      }
+      .bottomRight {
+        display: flex;
+        flex-direction: column;
+        gap: 6mm;
+        align-items: stretch;
+      }
+      .totals {
+        border-top: 1px solid var(--line);
+        padding-top: 6mm;
+      }
+      .totalsRow {
+        display: flex;
+        justify-content: space-between;
+        gap: 10mm;
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 2mm;
+      }
+      .totalsRow strong { color: var(--ink); }
+      .grand {
+        margin-top: 6mm;
+        padding-top: 5mm;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .grand .label {
+        font-size: 12px;
+        font-weight: 1000;
+        letter-spacing: 0.6px;
+      }
+      .grand .amt {
+        font-size: 18px;
+        font-weight: 1100;
+      }
+      .sign {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2mm;
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .signLine {
+        width: 55mm;
+        height: 1px;
+        background: var(--line);
+        margin-top: 10mm;
+      }
+
+      @page { size: A4; margin: 0; }
+      @media print {
+        body { background: #fff; }
+        .page { margin: 0; width: auto; min-height: auto; }
+        .table-wrap { break-inside: auto; }
+        tr.item-row { break-inside: avoid; page-break-inside: avoid; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="header">
+        <div class="strip">
+          <div class="stripInner">
+            <div class="logoBlock">
+              <div class="mark"></div>
+              <div class="logoText">
+                <div class="name">Home Square Interiors</div>
+                <div class="tag">Study + Wardrobe</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="circle"></div>
+        <div class="circleInner">
+          <div class="docTitle">QUOTATION</div>
+          <div class="metaGrid">
+            <div class="k">Ref #</div><div class="v">AUTO</div>
+            <div class="k">Date</div><div class="v">2026-01-12</div>
+          </div>
+        </div>
+
+        <div class="billRow">
+          <div class="billTo">
+            <div class="label">Quote to</div>
+            <div class="name">Test Client</div>
+            <div class="addr">
+              
+            </div>
+          </div>
+          <div class="brandMeta">
+            
+            
+            
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="c-sno">S.No</th>
+              <th class="c-room">Room</th>
+              <th>Item</th>
+              <th class="c-dims">W × H × D</th>
+              <th class="c-qty">Qty</th>
+              <th class="c-area">Sqft</th>
+              <th class="c-rate">Rate</th>
+              <th class="c-amt">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            
+        <tr class="item-row">
+          <td class="c-sno">1</td>
+          <td class="c-room">KBR</td>
+          <td class="c-item">
+            <div class="item-title">STUDY TABLE 1 - WALL UNIT</div>
+            <ul class="notes"><li>Carcse material: 16mm MR 303 Calibrated ply , Shutter - Marine board</li><li>Hardware: Hettich ( soft cloasing )</li><li>Lam - Matt finsih ( 3100rs/sheet ) Royal touch</li></ul>
+          </td>
+          <td class="c-dims">4356 × 690 × 320 mm</td>
+          <td class="c-qty">1</td>
+          <td class="c-area">33.396</td>
+          <td class="c-rate">1450</td>
+          <td class="c-amt">₹ 48,424.2</td>
+        </tr>
+      
+        <tr class="item-row">
+          <td class="c-sno">2</td>
+          <td class="c-room">KBR</td>
+          <td class="c-item">
+            <div class="item-title">STUDY TABLE 1 - BASE UNIT</div>
+            <ul class="notes"><li>Carcse material: 16mm MR 303 Calibrated ply , Shutter - Marine board</li><li>Lam - Matt finsih ( 3100rs/sheet ) Royal touch</li></ul>
+          </td>
+          <td class="c-dims">2160 × 300 × 600 mm</td>
+          <td class="c-qty">1</td>
+          <td class="c-area">7.2</td>
+          <td class="c-rate">2500</td>
+          <td class="c-amt">₹ 18,000</td>
+        </tr>
+      
+        <tr class="item-row">
+          <td class="c-sno">3</td>
+          <td class="c-room">KBR</td>
+          <td class="c-item">
+            <div class="item-title">TALL UNIT</div>
+            <ul class="notes"><li>Carcse material: 16mm MR 303 Calibrated ply , Shutter - Marine board</li><li>Hardware: Hettich ( soft cloasing )</li><li>Lam - Matt finsih ( 3100rs/sheet ) Royal touch , Inner lam - 0.8mm lam matching exterior colour</li></ul>
+          </td>
+          <td class="c-dims">450 × 2100 × 450 mm</td>
+          <td class="c-qty">1</td>
+          <td class="c-area">10.5</td>
+          <td class="c-rate">1650</td>
+          <td class="c-amt">₹ 17,325</td>
+        </tr>
+      
+        <tr class="item-row">
+          <td class="c-sno">4</td>
+          <td class="c-room">BED ROOM</td>
+          <td class="c-item">
+            <div class="item-title">WARDROBE</div>
+            <ul class="notes"><li>Carcse material: 16mm MR 303 Calibrated ply , Shutter - Marine board</li><li>Hardware: Hettich ( soft cloasing )</li><li>Lam - Matt finsih ( 3100rs/sheet ) Royal touch</li></ul>
+          </td>
+          <td class="c-dims">3020 × 2100 × 600 mm</td>
+          <td class="c-qty">1</td>
+          <td class="c-area">70.46666666666667</td>
+          <td class="c-rate">1650</td>
+          <td class="c-amt">₹ 1,16,270</td>
+        </tr>
+      
+        <tr class="item-row">
+          <td class="c-sno">5</td>
+          <td class="c-room">BED ROOM</td>
+          <td class="c-item">
+            <div class="item-title">FRAMING LOFT</div>
+            <ul class="notes"><li>Frame material: 16mm MR 303 Calibrated ply , Shutter - Marine board</li><li>Hardware: Hettich ( soft cloasing )</li><li>Lam - Matt finsih ( 3100rs/sheet ) Royal touch</li></ul>
+          </td>
+          <td class="c-dims">3020 × 650 × 600 mm</td>
+          <td class="c-qty">1</td>
+          <td class="c-area">21.81111111111111</td>
+          <td class="c-rate">800</td>
+          <td class="c-amt">₹ 17,448.89</td>
+        </tr>
+      
+        <tr class="item-row">
+          <td class="c-sno">6</td>
+          <td class="c-room">AL SHUTTER</td>
+          <td class="c-item">
+            <div class="item-title">TALL UNIT - WITH BLACK TINTED GLASS</div>
+            
+          </td>
+          <td class="c-dims">—</td>
+          <td class="c-qty"></td>
+          <td class="c-area"></td>
+          <td class="c-rate"></td>
+          <td class="c-amt">₹ 4,862</td>
+        </tr>
+      
+        <tr class="item-row">
+          <td class="c-sno">7</td>
+          <td class="c-room">AL SHUTTER</td>
+          <td class="c-item">
+            <div class="item-title">WARDROBE AL SHUTTER WITH LED MIRROR</div>
+            
+          </td>
+          <td class="c-dims">—</td>
+          <td class="c-qty"></td>
+          <td class="c-area"></td>
+          <td class="c-rate"></td>
+          <td class="c-amt">₹ 14,820</td>
+        </tr>
+      
+        <tr class="item-row">
+          <td class="c-sno">8</td>
+          <td class="c-room">KBR</td>
+          <td class="c-item">
+            <div class="item-title">PIN BOARD</div>
+            
+          </td>
+          <td class="c-dims">—</td>
+          <td class="c-qty"></td>
+          <td class="c-area"></td>
+          <td class="c-rate"></td>
+          <td class="c-amt">TO BE ADDED</td>
+        </tr>
+      
+        <tr class="item-row">
+          <td class="c-sno">9</td>
+          <td class="c-room">LIGTING</td>
+          <td class="c-item">
+            <div class="item-title">WARDROBE SENSOR LIGHTING AND BELOW MIDDLE UNIT LIGTING</div>
+            <ul class="notes"><li>APPROX PRICING WILL BE CONFIRMED AFTER ELECTRICIAN SITE VISIT</li></ul>
+          </td>
+          <td class="c-dims">—</td>
+          <td class="c-qty"></td>
+          <td class="c-area"></td>
+          <td class="c-rate"></td>
+          <td class="c-amt">₹ 28,000</td>
+        </tr>
+      
+        <tr class="item-row">
+          <td class="c-sno">10</td>
+          <td class="c-room">GENERAL</td>
+          <td class="c-item">
+            <div class="item-title">TRANSPORTATION AND HANDELING</div>
+            
+          </td>
+          <td class="c-dims">—</td>
+          <td class="c-qty"></td>
+          <td class="c-area"></td>
+          <td class="c-rate"></td>
+          <td class="c-amt">₹ 7,500</td>
+        </tr>
+      
+        <tr class="item-row">
+          <td class="c-sno">11</td>
+          <td class="c-room"></td>
+          <td class="c-item">
+            <div class="item-title">BASIC FLOOR PROTECTION  ( ONLY ON WORKING AREA )</div>
+            
+          </td>
+          <td class="c-dims">—</td>
+          <td class="c-qty"></td>
+          <td class="c-area"></td>
+          <td class="c-rate"></td>
+          <td class="c-amt">₹ 6,000</td>
+        </tr>
+      
+        <tr class="item-row">
+          <td class="c-sno">12</td>
+          <td class="c-room"></td>
+          <td class="c-item">
+            <div class="item-title">3D AND 2D DESIGNING</div>
+            
+          </td>
+          <td class="c-dims">—</td>
+          <td class="c-qty"></td>
+          <td class="c-area"></td>
+          <td class="c-rate"></td>
+          <td class="c-amt">₹ 20,000</td>
+        </tr>
+      
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bottom">
+        <div class="bubble"></div>
+        <div class="bottomLeft">
+          <div class="thanks">Thank you for your business.</div>
+          <div class="blockTitle">Terms & Conditions</div>
+          <div class="mini">
+            Final pricing will be confirmed after site verification. Taxes, if applicable, will be updated as per government rules.
+          </div>
+        </div>
+        <div class="bottomRight">
+          <div class="totals">
+            <div class="totalsRow"><span>Sub Total</span><strong>₹ 2,98,650.09</strong></div>
+            <div class="totalsRow"><span>Tax</span><strong>0.00%</strong></div>
+            <div class="grand">
+              <div class="label">Total</div>
+              <div class="amt">₹ 2,98,650.09</div>
+            </div>
+          </div>
+          <div class="sign">
+            <div class="signLine"></div>
+            <div>Authorised Sign</div>
+          </div>
+        </div>
+      </div>
+
+      </div><!-- /content -->
+    </div>
+  </body>
+</html>
