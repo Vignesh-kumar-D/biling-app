@@ -396,8 +396,9 @@ export function renderQuoteHTML(quote, opts = {}) {
           <div class="tRow total"><span>TOTAL :</span><strong>₹ ${money(typeof total === "number" ? total : 0)}</strong></div>
         </div>
         <div class="sign">
+        Aravind Srinivasan
           <div class="signLine"></div>
-          <div>Authorised Sign</div>
+          <div>Production head Signature</div>
         </div>
       </div>
 
