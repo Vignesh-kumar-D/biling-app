@@ -110,26 +110,127 @@ body {
 }
 .field input[type="text"]:focus { border-color: rgba(20,184,166,0.55); }
 
-#sheetField { display: none; }
-#sheetField.show { display: block; }
+#sheetField {
+  display: none;
+  opacity: 0;
+  transform: translateY(-6px);
+}
+#sheetField.show {
+  display: block;
+  animation: slideIn 280ms cubic-bezier(.2,.9,.2,1) forwards;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+#sheetField label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#sheetField label::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(20,184,166,0.18);
+}
 
-.field select {
+/* Custom dropdown */
+.customSelect {
+  position: relative;
+  width: 100%;
+}
+.customSelect-trigger {
   width: 100%;
   border-radius: 14px;
   border: 1px solid var(--line);
   background: rgba(0,0,0,0.22);
-  padding: 11px 12px;
+  padding: 11px 14px;
   color: var(--text);
-  outline: none;
-  transition: border-color 180ms ease;
   cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='rgba(255,255,255,0.6)' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
 }
-.field select:focus { border-color: rgba(20,184,166,0.55); }
-.field select option { background: #0b1220; color: #fff; }
+.customSelect-trigger:hover {
+  border-color: rgba(20,184,166,0.35);
+  background: rgba(0,0,0,0.28);
+}
+.customSelect.open .customSelect-trigger {
+  border-color: rgba(20,184,166,0.65);
+  box-shadow: 0 0 0 3px rgba(20,184,166,0.12);
+}
+.customSelect-arrow {
+  color: var(--accent);
+  transition: transform 200ms ease;
+  flex-shrink: 0;
+}
+.customSelect.open .customSelect-arrow {
+  transform: rotate(180deg);
+}
+.customSelect-options {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: rgba(11, 18, 32, 0.98);
+  border: 1px solid rgba(20,184,166,0.25);
+  border-radius: 14px;
+  padding: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  backdrop-filter: blur(12px);
+}
+.customSelect.open .customSelect-options {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.customSelect-option {
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+  font-size: 13px;
+}
+.customSelect-option:hover {
+  background: rgba(20,184,166,0.15);
+  color: #fff;
+}
+.customSelect-option.selected {
+  background: rgba(20,184,166,0.25);
+  color: var(--accent);
+  font-weight: 700;
+}
+.customSelect-option.selected::before {
+  content: "✓ ";
+  color: var(--accent);
+}
+/* Scrollbar styling for options */
+.customSelect-options::-webkit-scrollbar {
+  width: 6px;
+}
+.customSelect-options::-webkit-scrollbar-track {
+  background: transparent;
+}
+.customSelect-options::-webkit-scrollbar-thumb {
+  background: rgba(20,184,166,0.3);
+  border-radius: 3px;
+}
+.customSelect-options::-webkit-scrollbar-thumb:hover {
+  background: rgba(20,184,166,0.5);
+}
 
 .fieldRow {
   display: grid;

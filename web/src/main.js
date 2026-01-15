@@ -48,15 +48,20 @@ function render() {
 
   $("#btnPdf").textContent = state.isGenerating ? "Generating…" : "Download PDF";
 
-  // Sheet selector
-  const sheetSelect = $("#sheetSelect");
+  // Sheet selector (custom dropdown)
   const sheetField = $("#sheetField");
+  const selectValue = $("#selectValue");
+  const selectOptions = $("#selectOptions");
   if (state.sheets.length > 0) {
     sheetField.classList.add("show");
-    sheetSelect.innerHTML = state.sheets.map((s) => `<option value="${s}" ${s === state.selectedSheet ? "selected" : ""}>${s}</option>`).join("");
+    selectValue.textContent = state.selectedSheet || "Choose a sheet";
+    selectOptions.innerHTML = state.sheets.map((s) => 
+      `<div class="customSelect-option ${s === state.selectedSheet ? "selected" : ""}" data-value="${s}">${s}</div>`
+    ).join("");
   } else {
     sheetField.classList.remove("show");
-    sheetSelect.innerHTML = "";
+    selectValue.textContent = "Choose a sheet";
+    selectOptions.innerHTML = "";
   }
 
   const iframe = $("#previewFrame");
@@ -205,8 +210,16 @@ function init() {
           </div>
 
           <div class="field" id="sheetField">
-            <label>Sheet</label>
-            <select id="sheetSelect"></select>
+            <label>Select Sheet</label>
+            <div class="customSelect" id="customSelect">
+              <div class="customSelect-trigger" id="selectTrigger">
+                <span id="selectValue">Choose a sheet</span>
+                <svg class="customSelect-arrow" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 11L3 6h10l-5 5z"/>
+                </svg>
+              </div>
+              <div class="customSelect-options" id="selectOptions"></div>
+            </div>
           </div>
 
           <div class="fieldRow">
@@ -269,9 +282,30 @@ function init() {
     if (f) fetchSheets();
   });
 
-  $("#sheetSelect").addEventListener("change", (e) => {
-    state.selectedSheet = e.target.value;
+  // Custom dropdown toggle
+  const customSelect = $("#customSelect");
+  const selectTrigger = $("#selectTrigger");
+  
+  selectTrigger.addEventListener("click", () => {
+    customSelect.classList.toggle("open");
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!customSelect.contains(e.target)) {
+      customSelect.classList.remove("open");
+    }
+  });
+
+  // Handle option selection
+  $("#selectOptions").addEventListener("click", (e) => {
+    const option = e.target.closest(".customSelect-option");
+    if (!option) return;
+    
+    const value = option.dataset.value;
+    state.selectedSheet = value;
     state.quote = null;
+    customSelect.classList.remove("open");
     render();
     if (state.selectedSheet) parseExcel();
   });
