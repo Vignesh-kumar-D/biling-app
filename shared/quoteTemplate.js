@@ -117,7 +117,6 @@ export function renderQuoteHTML(quote, opts = {}) {
         padding: 12mm 12mm 10mm;
         margin: 0 auto;
         position: relative;
-        overflow: hidden;
       }
 
       /* Geometric teal corners */
@@ -346,9 +345,11 @@ export function renderQuoteHTML(quote, opts = {}) {
       @page { size: A4; margin: 0; }
       @media print {
         body { background: #fff; }
-        .page { margin: 0; width: auto; min-height: auto; }
+        .page { margin: 0; width: auto; min-height: auto; padding: 12mm; }
+        .header, .subHeader, .quotationLabel { page-break-after: avoid; }
         .tableWrap { break-inside: auto; }
         tr.item-row { break-inside: avoid; page-break-inside: avoid; }
+        .bottom, .termsSection, .thanks { page-break-inside: avoid; }
       }
     </style>
   </head>
