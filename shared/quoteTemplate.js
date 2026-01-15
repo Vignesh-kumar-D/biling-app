@@ -176,7 +176,7 @@ export function renderQuoteHTML(quote, opts = {}) {
       .subHeader {
         margin-top: 8mm;
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr ;
         gap: 10mm;
         position: relative;
         z-index: 2;
@@ -208,15 +208,19 @@ export function renderQuoteHTML(quote, opts = {}) {
       /* QUOTATION label above table */
       .quotationLabel {
         margin-top: 10mm;
-        font-size: 20px;
-        font-weight: 1000;
-        letter-spacing: 2px;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
         color: var(--accent);
-        text-align: center;
+        text-align: left;
         padding-bottom: 3mm;
-        border-bottom: 2px solid var(--accent);
+        border-bottom: 1px solid var(--line);
         position: relative;
         z-index: 2;
+      }
+      .quotationLabel .forName {
+        color: var(--ink);
+        font-weight: 800;
       }
 
       .tableWrap {
@@ -358,10 +362,6 @@ export function renderQuoteHTML(quote, opts = {}) {
 
       <!-- Sub-header: Client name + Ref/Date -->
       <div class="subHeader">
-        <div class="clientBlock">
-          <div class="label">Quote To</div>
-          <div class="clientName">${safe(quote.clientName ?? "—")}</div>
-        </div>
         <div class="refBlock">
           <div class="refMeta">Ref: <span>${safe(refNo)}</span></div>
           <div class="refMeta">Date: <span>${safe(dateStr)}</span></div>
@@ -369,7 +369,7 @@ export function renderQuoteHTML(quote, opts = {}) {
       </div>
 
       <!-- QUOTATION label above table -->
-      <div class="quotationLabel">QUOTATION</div>
+      <div class="quotationLabel">Quotation${quote.clientName ? ` for <span class="quotationLabel">${safe(quote.clientName)}</span>` : ""}</div>
 
       <div class="tableWrap">
         <table>
@@ -408,7 +408,7 @@ export function renderQuoteHTML(quote, opts = {}) {
       </div>
 
       <!-- Thank you -->
-      <div class="thanks">Thank you for your business!</div>
+      <div class="thanks">Thank you for selecting  home square interiors!</div>
     </div>
   </body>
 </html>`;
