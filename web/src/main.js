@@ -39,13 +39,11 @@ function render() {
   $("#clientName").value = state.quote?.clientName ?? "";
   $("#projectName").value = state.quote?.projectName ?? "";
 
-  $("#btnParse").disabled = !state.file || state.isParsing;
   $("#btnPdf").disabled = !state.quote || state.isGenerating;
 
   $("#fileName").textContent = state.file ? state.file.name : "No file chosen";
   $("#fileBadge").textContent = state.quote?.sheetName ? `Sheet: ${state.quote.sheetName}` : "Upload an Excel file to begin";
 
-  $("#btnParse").textContent = state.isParsing ? "Parsing…" : "Parse Excel";
   $("#btnPdf").textContent = state.isGenerating ? "Generating…" : "Download PDF";
 
   const iframe = $("#previewFrame");
@@ -174,7 +172,6 @@ function init() {
           </div>
 
           <div class="actions">
-            <button class="btn primary" id="btnParse">Parse Excel</button>
             <button class="btn" id="btnPdf">Download PDF</button>
           </div>
 
@@ -215,8 +212,9 @@ function init() {
     state.file = f;
     state.quote = null;
     setError("");
-    setStatus(f ? "Ready to parse." : "Upload an Excel file to begin", "info");
+    setStatus(f ? "Parsing your Excel…" : "Upload an Excel file to begin", "info");
     render();
+    if (f) parseExcel();
   });
 
   $("#clientName").addEventListener("input", () => {
@@ -231,7 +229,6 @@ function init() {
     render();
   });
 
-  $("#btnParse").addEventListener("click", parseExcel);
   $("#btnPdf").addEventListener("click", downloadPdf);
 
   render();
