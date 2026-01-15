@@ -3,39 +3,62 @@ import { renderQuoteHTML } from "../../../shared/quoteTemplate.js";
 import fs from "node:fs";
 import path from "node:path";
 
+let browserPromise = null;
+
+async function getBrowser() {
+  if (!browserPromise) {
+    const userDataDir = path.resolve(process.cwd(), ".puppeteer-profile");
+    try {
+      fs.mkdirSync(userDataDir, { recursive: true });
+    } catch {
+      // ignore
+    }
+
+    browserPromise = puppeteer.launch({
+      headless: "new",
+      userDataDir,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--font-render-hinting=medium",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-crash-reporter",
+        "--disable-crashpad",
+      ],
+    });
+  }
+
+  return browserPromise;
+}
+
+export async function warmPdfRenderer() {
+  await getBrowser();
+}
+
+export async function closePdfRenderer() {
+  if (!browserPromise) return;
+  try {
+    const browser = await browserPromise;
+    await browser.close();
+  } finally {
+    browserPromise = null;
+  }
+}
+
 export async function renderQuotePdfBuffer(quote, opts = {}) {
   const html = renderQuoteHTML(quote, opts);
 
-  // Keep Chromium *profile* inside the project. Do NOT override HOME here in production,
-  // otherwise Puppeteer may look for Chrome in a different cache directory than where it was installed.
-  const userDataDir = path.resolve(process.cwd(), ".puppeteer-profile");
-  try {
-    fs.mkdirSync(userDataDir, { recursive: true });
-  } catch {
-    // ignore
-  }
-
-  const browser = await puppeteer.launch({
-    headless: "new",
-    userDataDir,
-    // Ensure Puppeteer uses the Chrome it knows about (after `puppeteer browsers install chrome`).
-    // If you use a system Chrome, you can set PUPPETEER_EXECUTABLE_PATH in Render.
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--font-render-hinting=medium",
-      "--no-first-run",
-      "--no-default-browser-check",
-      "--disable-crash-reporter",
-      "--disable-crashpad",
-    ],
-  });
+  const browser = await getBrowser();
+  const page = await browser.newPage();
 
   try {
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1240, height: 1754, deviceScaleFactor: 2 });
-    await page.setContent(html, { waitUntil: ["domcontentloaded", "networkidle0"] });
+    // Slightly lower DPR for speed; bump to 2 if you need ultra-crisp output.
+    await page.setViewport({ width: 1240, height: 1754, deviceScaleFactor: 1.5 });
+    // Our template is self-contained (no external resources), so domcontentloaded is enough.
+    await page.setContent(html, { waitUntil: ["domcontentloaded"] });
+    await page.emulateMediaType("screen");
 
     const pdf = await page.pdf({
       format: "A4",
@@ -45,7 +68,7 @@ export async function renderQuotePdfBuffer(quote, opts = {}) {
 
     return pdf;
   } finally {
-    await browser.close();
+    await page.close().catch(() => {});
   }
 }
 
