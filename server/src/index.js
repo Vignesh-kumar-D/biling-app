@@ -2,8 +2,8 @@ import express from "express";
 import multer from "multer";
 import fs from "node:fs";
 import puppeteer from "puppeteer";
-import { parseQuoteFromWorkbookBuffer } from "./excel/parseQuote.js";
-import { renderQuotePdfBuffer } from "./pdf/renderPdf.js";
+import { getSheetNames, parseQuoteFromWorkbookBuffer } from "./excel/parseQuote.js";
+import { closePdfRenderer, renderQuotePdfBuffer, warmPdfRenderer } from "./pdf/renderPdf.js";
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
@@ -52,6 +52,19 @@ app.get("/api/diag", (req, res) => {
   });
 });
 
+// Upload Excel -> get sheet names (for sheet selector UI)
+app.post("/api/sheets", upload.single("file"), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: "Missing Excel file (form-data key: file)" });
+
+    const sheets = getSheetNames(file.buffer);
+    res.json({ sheets });
+  } catch (err) {
+    res.status(400).json({ error: err?.message ?? "Failed to read Excel" });
+  }
+});
+
 // Upload Excel -> parse -> quote JSON
 app.post("/api/parse", upload.single("file"), async (req, res) => {
   try {
@@ -75,11 +88,13 @@ app.post("/api/pdf", async (req, res) => {
     const { quote, brand } = req.body ?? {};
     if (!quote) return res.status(400).json({ error: "Missing quote in request body" });
 
+    const t0 = Date.now();
     const pdf = await renderQuotePdfBuffer(quote, brand);
-    const filename = `Quotation-${(quote.clientName || "Client").replaceAll(/[\\s\\/\\\\]+/g, "-")}.pdf`;
+    res.setHeader("Server-Timing", "pdf;dur=" + (Date.now() - t0));
+    const filename = "Quotation-" + (quote.clientName || "Client").replace(/[\s\/\\]+/g, "-") + ".pdf";
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
     res.send(Buffer.from(pdf));
   } catch (err) {
     res.status(500).json({ error: err?.message ?? "Failed to generate PDF" });
@@ -89,7 +104,13 @@ app.post("/api/pdf", async (req, res) => {
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || "127.0.0.1";
 app.listen(port, host, () => {
-  // eslint-disable-next-line no-console
-  console.log(`HSI quote server running on http://${host}:${port}`);
+  console.log("HSI quote server running on http://" + host + ":" + port);
 });
 
+// Warm Chromium on boot to reduce first PDF latency.
+warmPdfRenderer().catch(() => {});
+
+// Graceful shutdown on Render
+process.on("SIGTERM", () => {
+  closePdfRenderer().finally(() => process.exit(0));
+});

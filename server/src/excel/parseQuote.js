@@ -1,6 +1,14 @@
 import * as XLSX from "xlsx";
 import { z } from "zod";
 
+/**
+ * Returns the list of sheet names in the workbook.
+ */
+export function getSheetNames(buffer) {
+  const workbook = XLSX.read(buffer, { type: "buffer", bookSheets: true });
+  return workbook.SheetNames ?? [];
+}
+
 const QuoteItemSchema = z.object({
   sno: z.union([z.string(), z.number()]).optional(),
   room: z.string().optional(),

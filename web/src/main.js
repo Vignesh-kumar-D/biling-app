@@ -5,6 +5,8 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8787";
 
 const state = {
   file: null,
+  sheets: [],
+  selectedSheet: "",
   quote: null,
   isParsing: false,
   isGenerating: false,
@@ -42,9 +44,20 @@ function render() {
   $("#btnPdf").disabled = !state.quote || state.isGenerating;
 
   $("#fileName").textContent = state.file ? state.file.name : "No file chosen";
-  $("#fileBadge").textContent = state.quote?.sheetName ? `Sheet: ${state.quote.sheetName}` : "Upload an Excel file to begin";
+  $("#fileBadge").textContent = state.quote?.sheetName ? `Using: ${state.quote.sheetName}` : (state.sheets.length ? `${state.sheets.length} sheet(s) found` : "Upload an Excel file to begin");
 
   $("#btnPdf").textContent = state.isGenerating ? "Generating…" : "Download PDF";
+
+  // Sheet selector
+  const sheetSelect = $("#sheetSelect");
+  const sheetField = $("#sheetField");
+  if (state.sheets.length > 0) {
+    sheetField.classList.add("show");
+    sheetSelect.innerHTML = state.sheets.map((s) => `<option value="${s}" ${s === state.selectedSheet ? "selected" : ""}>${s}</option>`).join("");
+  } else {
+    sheetField.classList.remove("show");
+    sheetSelect.innerHTML = "";
+  }
 
   const iframe = $("#previewFrame");
   if (state.quote) {
@@ -59,16 +72,47 @@ function render() {
   }
 }
 
-async function parseExcel() {
+async function fetchSheets() {
   if (!state.file) return;
+  setError("");
+  setStatus("Reading sheets from Excel…", "info");
+
+  try {
+    const form = new FormData();
+    form.append("file", state.file);
+    const res = await fetch(`${API_BASE}/api/sheets`, { method: "POST", body: form });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Failed to read Excel");
+
+    state.sheets = data.sheets ?? [];
+    state.selectedSheet = state.sheets[0] ?? "";
+    setStatus("Select a sheet and it will be parsed automatically.", "info");
+    render();
+
+    // Auto-parse the first sheet
+    if (state.selectedSheet) {
+      await parseExcel();
+    }
+  } catch (e) {
+    state.sheets = [];
+    state.selectedSheet = "";
+    setError(e?.message || "Failed to read sheets");
+    setStatus("Fix the issue and try again.", "error");
+    render();
+  }
+}
+
+async function parseExcel() {
+  if (!state.file || !state.selectedSheet) return;
   state.isParsing = true;
   setError("");
-  setStatus("Reading your Excel and building the quote…", "info");
+  setStatus(`Parsing sheet "${state.selectedSheet}"…`, "info");
   render();
 
   try {
     const form = new FormData();
     form.append("file", state.file);
+    form.append("sheetName", state.selectedSheet);
     form.append("projectName", $("#projectName").value || "");
     const res = await fetch(`${API_BASE}/api/parse`, { method: "POST", body: form });
     const data = await res.json().catch(() => ({}));
@@ -120,7 +164,7 @@ async function downloadPdf() {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-    setStatus("Downloaded. You’re done.", "ok");
+    setStatus("Downloaded. You're done.", "ok");
   } catch (e) {
     setError(e?.message || "PDF generation failed");
     setStatus("Fix the issue and try again.", "error");
@@ -160,6 +204,11 @@ function init() {
             </div>
           </div>
 
+          <div class="field" id="sheetField">
+            <label>Sheet</label>
+            <select id="sheetSelect"></select>
+          </div>
+
           <div class="fieldRow">
             <div class="field">
               <label>Client name</label>
@@ -191,7 +240,7 @@ function init() {
 
           <div class="previewEmpty show" id="previewEmpty">
             <div class="ghost"></div>
-            <div class="previewText">Upload an Excel file and click <b>Parse Excel</b> to see the premium preview here.</div>
+            <div class="previewText">Upload an Excel file to see the premium preview here.</div>
           </div>
 
           <div class="previewWrap" id="previewWrap">
@@ -209,12 +258,22 @@ function init() {
 
   $("#file").addEventListener("change", (e) => {
     const f = e.target.files?.[0] ?? null;
+    // Reset input so re-selecting the same file triggers change again
+    e.target.value = "";
     state.file = f;
+    state.sheets = [];
+    state.selectedSheet = "";
     state.quote = null;
     setError("");
-    setStatus(f ? "Parsing your Excel…" : "Upload an Excel file to begin", "info");
     render();
-    if (f) parseExcel();
+    if (f) fetchSheets();
+  });
+
+  $("#sheetSelect").addEventListener("change", (e) => {
+    state.selectedSheet = e.target.value;
+    state.quote = null;
+    render();
+    if (state.selectedSheet) parseExcel();
   });
 
   $("#clientName").addEventListener("input", () => {
