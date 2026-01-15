@@ -1,7 +1,6 @@
 export function renderQuoteHTML(quote, opts = {}) {
   const brand = {
     name: opts.companyName ?? "Home Square Interiors",
-    // HSI teal accent (on-brand). You can still override from the UI/server.
     accent: opts.accent ?? "#0f766e",
     phone: opts.phone ?? "",
     email: opts.email ?? "",
@@ -27,10 +26,6 @@ export function renderQuoteHTML(quote, opts = {}) {
   const today = new Date();
   const dateStr = quote.date ?? today.toISOString().slice(0, 10);
   const refNo = quote.quoteNumber ?? quote.invoiceNumber ?? quote.referenceNo ?? quote.sourceLabel ?? "";
-  const dueDateStr = quote.dueDate ?? "";
-  const billToLines = Array.isArray(quote.clientAddressLines)
-    ? quote.clientAddressLines.filter(Boolean)
-    : (quote.clientAddress ? String(quote.clientAddress).split(/\n+/) : []);
 
   const formatItemDescription = (it) => {
     const bits = [];
@@ -85,10 +80,6 @@ export function renderQuoteHTML(quote, opts = {}) {
     })
     .join("");
 
-  const paymentInfoLines = Array.isArray(quote.paymentInfoLines)
-    ? quote.paymentInfoLines.filter(Boolean)
-    : (quote.paymentInfo ? String(quote.paymentInfo).split(/\n+/) : []);
-
   const termsText =
     quote.terms ??
     "Please confirm the scope and finish details before execution. Final pricing will be confirmed after site verification. Taxes, if applicable, will be updated as per government rules.";
@@ -102,13 +93,12 @@ export function renderQuoteHTML(quote, opts = {}) {
     <style>
       :root {
         --accent: ${brand.accent};
-        --accent-rgb: 15, 118, 110; /* used for translucent accents */
+        --accent-rgb: 15, 118, 110;
         --ink: #0b1220;
         --muted: #5b6475;
         --line: rgba(15, 23, 42, 0.12);
         --paper: #ffffff;
         --soft: #f3f4f6;
-        --soft2: #eef2ff;
         --headerGrey: #e5e7eb;
       }
       * { box-sizing: border-box; }
@@ -128,7 +118,7 @@ export function renderQuoteHTML(quote, opts = {}) {
         overflow: hidden;
       }
 
-      /* Geometric blue corners (like reference). */
+      /* Geometric teal corners */
       .decor-tl, .decor-br {
         position: absolute;
         width: 70mm;
@@ -167,68 +157,31 @@ export function renderQuoteHTML(quote, opts = {}) {
         transform: rotate(-14deg);
       }
 
+      /* Header - centered company name */
       .header {
+        text-align: center;
+        padding-bottom: 6mm;
+        border-bottom: 2px solid var(--accent);
+        position: relative;
+        z-index: 2;
+      }
+      .brandName {
+        font-size: 26px;
+        font-weight: 1000;
+        letter-spacing: 1px;
+        color: var(--accent);
+      }
+
+      /* Sub-header: client + ref/date */
+      .subHeader {
+        margin-top: 8mm;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10mm;
-        align-items: start;
         position: relative;
         z-index: 2;
       }
-
-      .brandBlock {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-      }
-      .brandLogo {
-        width: 14mm;
-        height: 14mm;
-        border-radius: 4mm;
-        background: linear-gradient(180deg, rgba(var(--accent-rgb),0.95), rgba(var(--accent-rgb),0.65));
-        box-shadow: 0 10px 30px rgba(var(--accent-rgb),0.22);
-      }
-      .brandName {
-        font-size: 18px;
-        font-weight: 1000;
-        letter-spacing: 0.2px;
-      }
-      .brandMeta {
-        margin-top: 6px;
-        color: var(--muted);
-        font-size: 10px;
-        line-height: 1.45;
-      }
-
-      .doc {
-        text-align: right;
-      }
-      .docTitle {
-        font-size: 22px;
-        font-weight: 1100;
-        letter-spacing: 2px;
-        color: var(--accent);
-      }
-      .docMeta {
-        margin-top: 6px;
-        display: grid;
-        grid-template-columns: 1fr auto;
-        justify-content: end;
-        gap: 6px 10px;
-        font-size: 10px;
-        color: var(--muted);
-      }
-      .docMeta .k { text-align: left; }
-      .docMeta .v { text-align: right; color: var(--ink); font-weight: 800; }
-
-      .billTo {
-        margin-top: 10mm;
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 2mm;
-        position: relative;
-        z-index: 2;
-      }
+      .clientBlock {}
       .label {
         font-size: 10px;
         letter-spacing: 0.8px;
@@ -237,18 +190,37 @@ export function renderQuoteHTML(quote, opts = {}) {
         font-weight: 900;
       }
       .clientName {
-        font-size: 13px;
+        margin-top: 2mm;
+        font-size: 14px;
         font-weight: 1000;
-        color: var(--accent);
+        color: var(--ink);
       }
-      .addr {
-        font-size: 10px;
+      .refBlock {
+        text-align: right;
+      }
+      .refMeta {
+        margin-top: 2mm;
+        font-size: 11px;
         color: var(--muted);
-        line-height: 1.45;
+      }
+      .refMeta span { color: var(--ink); font-weight: 800; }
+
+      /* QUOTATION label above table */
+      .quotationLabel {
+        margin-top: 10mm;
+        font-size: 20px;
+        font-weight: 1000;
+        letter-spacing: 2px;
+        color: var(--accent);
+        text-align: center;
+        padding-bottom: 3mm;
+        border-bottom: 2px solid var(--accent);
+        position: relative;
+        z-index: 2;
       }
 
       .tableWrap {
-        margin-top: 10mm;
+        margin-top: 6mm;
         position: relative;
         z-index: 2;
       }
@@ -300,45 +272,36 @@ export function renderQuoteHTML(quote, opts = {}) {
         line-height: 1.35;
       }
 
+      /* Bottom section: totals on left, sign on right */
       .bottom {
         margin-top: 10mm;
         display: grid;
-        grid-template-columns: 1.2fr 0.8fr;
+        grid-template-columns: 1fr 1fr;
         gap: 12mm;
-        align-items: end;
+        align-items: start;
         position: relative;
         z-index: 2;
       }
-      .payment, .terms {
-        font-size: 10px;
-        color: var(--muted);
-        line-height: 1.5;
-      }
-      .payment strong, .terms strong { color: var(--ink); }
-      .paymentLines { margin-top: 4px; }
-      .paymentLines div { margin-top: 2px; }
 
       .totals {
-        justify-self: end;
         width: 80mm;
-        font-size: 10px;
+        font-size: 11px;
         color: var(--muted);
       }
       .tRow {
         display: flex;
         justify-content: space-between;
-        padding: 3px 0;
+        padding: 4px 0;
       }
       .tRow strong { color: var(--ink); }
       .tRow.total {
         margin-top: 4px;
         padding-top: 6px;
-        border-top: 1px solid var(--line);
+        border-top: 2px solid var(--accent);
       }
-      .tRow.total strong { font-size: 14px; }
+      .tRow.total strong { font-size: 15px; color: var(--accent); }
 
       .sign {
-        margin-top: 10mm;
         text-align: right;
         font-size: 10px;
         color: var(--muted);
@@ -347,15 +310,31 @@ export function renderQuoteHTML(quote, opts = {}) {
         height: 1px;
         background: var(--line);
         width: 55mm;
-        margin: 10mm 0 2mm auto;
+        margin: 4mm 0 2mm auto;
       }
 
+      /* Terms section - keep away from bottom-right corner */
+      .termsSection {
+        margin-top: 8mm;
+        font-size: 10px;
+        color: var(--muted);
+        line-height: 1.5;
+        position: relative;
+        z-index: 2;
+        max-width: 140mm;
+      }
+
+      /* Thank you */
       .thanks {
-        margin-top: 10mm;
+        margin-top: 8mm;
+        margin-bottom: 20mm;
+        text-align: center;
         font-size: 18px;
         font-weight: 1000;
         color: var(--accent);
         letter-spacing: 0.2px;
+        position: relative;
+        z-index: 2;
       }
 
       @page { size: A4; margin: 0; }
@@ -372,42 +351,32 @@ export function renderQuoteHTML(quote, opts = {}) {
       <div class="decor-tl"></div>
       <div class="decor-br"></div>
 
+      <!-- Header: Company name centered -->
       <div class="header">
-        <div>
-          <div class="brandBlock">
-            <div class="brandLogo"></div>
-            <div class="brandName">${safe(brand.name)}</div>
-          </div>
-          <div class="brandMeta">
-            ${brand.address ? `${safe(brand.address)}<br/>` : ""}
-            ${brand.phone ? `Phone: ${safe(brand.phone)}<br/>` : ""}
-            ${brand.email ? `Email: ${safe(brand.email)}` : ""}
-          </div>
+        <div class="brandName">${safe(brand.name)}</div>
+      </div>
+
+      <!-- Sub-header: Client name + Ref/Date -->
+      <div class="subHeader">
+        <div class="clientBlock">
+          <div class="label">Quote To</div>
+          <div class="clientName">${safe(quote.clientName ?? "—")}</div>
         </div>
-        <div class="doc">
-          <div class="docTitle">QUOTATION</div>
-          <div class="docMeta">
-            <div class="k">Quotation Number</div><div class="v">${safe(refNo)}</div>
-            <div class="k">Invoice Date</div><div class="v">${safe(dateStr)}</div>
-            ${dueDateStr ? `<div class="k">Due Date</div><div class="v">${safe(dueDateStr)}</div>` : ""}
-          </div>
+        <div class="refBlock">
+          <div class="refMeta">Ref: <span>${safe(refNo)}</span></div>
+          <div class="refMeta">Date: <span>${safe(dateStr)}</span></div>
         </div>
       </div>
 
-      <div class="billTo">
-        <div class="label">Quote to</div>
-        <div class="clientName">${safe(quote.clientName ?? "—")}</div>
-        <div class="addr">
-          ${billToLines.length ? billToLines.map((l) => `${safe(l)}<br/>`).join("") : ""}
-        </div>
-      </div>
+      <!-- QUOTATION label above table -->
+      <div class="quotationLabel">QUOTATION</div>
 
       <div class="tableWrap">
         <table>
           <thead>
             <tr>
               <th class="c-sl">SL</th>
-              <th class="c-qty">QUANTITY</th>
+              <th class="c-qty">QTY</th>
               <th class="c-desc">ITEM DESCRIPTION</th>
               <th class="c-rate">RATE</th>
               <th class="c-amt">AMOUNT</th>
@@ -419,43 +388,28 @@ export function renderQuoteHTML(quote, opts = {}) {
         </table>
       </div>
 
+      <!-- Bottom: Totals on left, Sign on right -->
       <div class="bottom">
-        <div>
-          <div class="payment">
-            <div class="label">Payment Method</div>
-            <div class="paymentLines">
-              ${
-                paymentInfoLines.length
-                  ? paymentInfoLines.map((l) => `<div>${safe(l)}</div>`).join("")
-                  : `<div><strong>Account Name:</strong> ${safe(brand.name)}</div>
-                     <div><strong>UPI:</strong> ${safe(quote.upiId ?? "")}</div>
-                     <div><strong>Email:</strong> ${safe(brand.email)}</div>`
-              }
-            </div>
-          </div>
-
-          <div class="terms" style="margin-top: 8mm;">
-            <div class="label">Terms & Conditions</div>
-            <div style="margin-top: 4px;">${safe(termsText)}</div>
-          </div>
-
-          <div class="thanks">Thank for your business with us!</div>
+        <div class="totals">
+          <div class="tRow"><span>SUBTOTAL :</span><strong>₹ ${money(typeof total === "number" ? total : 0)}</strong></div>
+          <div class="tRow"><span>TAX :</span><strong>${safe(quote.taxLabel ?? "0.00%")}</strong></div>
+          <div class="tRow total"><span>TOTAL :</span><strong>₹ ${money(typeof total === "number" ? total : 0)}</strong></div>
         </div>
-
-        <div>
-          <div class="totals">
-            <div class="tRow"><span>SUBTOTAL :</span><strong>₹ ${money(typeof total === "number" ? total : 0)}</strong></div>
-            <div class="tRow"><span>TAX :</span><strong>${safe(quote.taxLabel ?? "0.00%")}</strong></div>
-            <div class="tRow total"><span>TOTAL :</span><strong>₹ ${money(typeof total === "number" ? total : 0)}</strong></div>
-          </div>
-          <div class="sign">
-            <div class="signLine"></div>
-            <div>Authorised Sign</div>
-          </div>
+        <div class="sign">
+          <div class="signLine"></div>
+          <div>Authorised Sign</div>
         </div>
       </div>
+
+      <!-- Terms -->
+      <div class="termsSection">
+        <div class="label">Terms & Conditions</div>
+        <div style="margin-top: 4px;">${safe(termsText)}</div>
+      </div>
+
+      <!-- Thank you -->
+      <div class="thanks">Thank you for your business!</div>
     </div>
   </body>
 </html>`;
 }
-
