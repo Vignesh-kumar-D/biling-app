@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node src/index.js",
+    "postinstall": "npx puppeteer browsers install chrome",
     "start": "node src/index.js"
   },
   "dependencies": {
