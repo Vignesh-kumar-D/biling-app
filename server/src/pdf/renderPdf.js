@@ -6,7 +6,8 @@ import path from "node:path";
 export async function renderQuotePdfBuffer(quote, opts = {}) {
   const html = renderQuoteHTML(quote, opts);
 
-  // Keep Chromium profile/cache inside the project to avoid OS/sandbox permission issues.
+  // Keep Chromium *profile* inside the project. Do NOT override HOME here in production,
+  // otherwise Puppeteer may look for Chrome in a different cache directory than where it was installed.
   const userDataDir = path.resolve(process.cwd(), ".puppeteer-profile");
   try {
     fs.mkdirSync(userDataDir, { recursive: true });
@@ -17,6 +18,9 @@ export async function renderQuotePdfBuffer(quote, opts = {}) {
   const browser = await puppeteer.launch({
     headless: "new",
     userDataDir,
+    // Ensure Puppeteer uses the Chrome it knows about (after `puppeteer browsers install chrome`).
+    // If you use a system Chrome, you can set PUPPETEER_EXECUTABLE_PATH in Render.
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
     args: [
       "--no-sandbox",
       "--disable-setuid-sandbox",
@@ -26,10 +30,6 @@ export async function renderQuotePdfBuffer(quote, opts = {}) {
       "--disable-crash-reporter",
       "--disable-crashpad",
     ],
-    env: {
-      ...process.env,
-      HOME: userDataDir,
-    },
   });
 
   try {

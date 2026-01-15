@@ -1,5 +1,7 @@
 import express from "express";
 import multer from "multer";
+import fs from "node:fs";
+import puppeteer from "puppeteer";
 import { parseQuoteFromWorkbookBuffer } from "./excel/parseQuote.js";
 import { renderQuotePdfBuffer } from "./pdf/renderPdf.js";
 
@@ -21,6 +23,33 @@ app.use((req, res, next) => {
 
 app.get("/api/health", (req, res) => {
   res.json({ ok: true });
+});
+
+// Debug endpoint to verify Puppeteer/Chrome setup in production.
+app.get("/api/diag", (req, res) => {
+  const executablePath = (() => {
+    try {
+      return puppeteer.executablePath();
+    } catch {
+      return null;
+    }
+  })();
+
+  const exists = executablePath ? fs.existsSync(executablePath) : false;
+
+  res.json({
+    ok: true,
+    node: process.version,
+    puppeteer: puppeteer.version,
+    executablePath,
+    executableExists: exists,
+    env: {
+      PUPPETEER_CACHE_DIR: process.env.PUPPETEER_CACHE_DIR ?? null,
+      PUPPETEER_EXECUTABLE_PATH: process.env.PUPPETEER_EXECUTABLE_PATH ?? null,
+      HOST: process.env.HOST ?? null,
+      PORT: process.env.PORT ?? null,
+    },
+  });
 });
 
 // Upload Excel -> parse -> quote JSON
