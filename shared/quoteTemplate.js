@@ -35,7 +35,9 @@ export function renderQuoteHTML(quote, opts = {}) {
       it.widthMm || it.heightMm || it.depthMm
         ? `${safe(it.widthMm ?? "—")} × ${safe(it.heightMm ?? "—")} × ${safe(it.depthMm ?? "—")} mm`
         : "";
-    const area = it.areaSqft !== undefined && it.areaSqft !== "" ? `${safe(it.areaSqft)} sqft` : "";
+    const area = it.areaSqft !== undefined && it.areaSqft !== "" 
+      ? `${parseFloat(it.areaSqft).toFixed(2)} sqft` 
+      : "";
 
     if (room) bits.push(`<span class="pill">${safe(room)}</span>`);
     if (itemName) bits.push(`<span class="descTitle">${safe(itemName)}</span>`);
